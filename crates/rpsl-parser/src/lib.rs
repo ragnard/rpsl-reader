@@ -112,6 +112,11 @@ impl<C: Callbacks> RpslParser<C> {
             }
 
             let Some(colon_pos) = memchr::memchr(b':', clean_line) else {
+                // Handle special EOF literal found in APNIC files
+                if clean_line == [b'E', b'O', b'F'] {
+                    return Ok(());
+                }
+
                 return Err(ParseError::InvalidSyntax {
                     line_number,
                     message: "Expected an attribute",
@@ -222,6 +227,9 @@ impl<C: Callbacks> RpslParser<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::io::BufReader;
+    use std::path::PathBuf;
 
     #[test]
     fn test_parse_empty() {
@@ -235,5 +243,64 @@ mod tests {
         let input = b"route: 192.0.2.0/24\norigin: AS65000\n\n";
         let mut parser = RpslParser::new(Noop);
         parser.parse(&input[..]).unwrap();
+    }
+
+    fn fixtures_dir() -> PathBuf {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("fixtures");
+        path.push("dbs");
+        path
+    }
+
+    #[test]
+    fn test_parse_real_world_files() {
+        let dir = fixtures_dir();
+
+        if !dir.exists() {
+            eprintln!("Skipping: {} does not exist", dir.display());
+            return;
+        }
+
+        let entries: Vec<_> = fs::read_dir(&dir)
+            .expect("Failed to read fixtures directory")
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                let path = e.path();
+                path.is_file()
+                    && (path.extension().map(|s| s == "txt").unwrap_or(false)
+                        || path.extension().map(|s| s == "gz").unwrap_or(false)
+                        || path.extension().map(|s| s == "db").unwrap_or(false))
+            })
+            .collect();
+
+        if entries.is_empty() {
+            eprintln!("No fixtures found in {}", dir.display());
+            return;
+        }
+
+        for entry in entries {
+            let path = entry.path();
+            eprintln!("Parsing: {}", path.display());
+
+            let file =
+                fs::File::open(&path).unwrap_or_else(|_| panic!("Failed to open {:?}", path));
+
+            let result = if path.extension().map(|s| s == "gz").unwrap_or(false) {
+                let reader = BufReader::new(flate2::read::GzDecoder::new(file));
+                let mut parser = RpslParser::new(Noop);
+                parser.parse(reader)
+            } else {
+                let reader = BufReader::new(file);
+                let mut parser = RpslParser::new(Noop);
+                parser.parse(reader)
+            };
+
+            assert!(
+                result.is_ok(),
+                "Failed to parse {}: {:?}",
+                path.display(),
+                result.err()
+            );
+        }
     }
 }
