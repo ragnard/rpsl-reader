@@ -27,8 +27,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ragnard/polars-rpsl"
-Repository = "https://github.com/ragnard/polars-rpsl.git"
+Homepage = "https://github.com/ragnard/rpsl-reader"
+Repository = "https://github.com/ragnard/rpsl-reader.git"
 
 [dependency-groups]
 dev = ["maturin>=1.0,<2.0", "pytest>=8.0"]
