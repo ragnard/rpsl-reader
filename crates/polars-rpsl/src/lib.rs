@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Cursor};
 use std::path::Path;
 
 use flate2::read::GzDecoder;
@@ -117,8 +117,28 @@ fn py_read_rpsl(path: &str, schema: Option<PyDataFrame>) -> PyResult<PyDataFrame
     }
 }
 
+#[pyfunction]
+#[pyo3(name = "read_rpsl_bytes", signature = (data, schema=None))]
+fn py_read_rpsl_bytes(data: &[u8], schema: Option<PyDataFrame>) -> PyResult<PyDataFrame> {
+    let reader = BufReader::new(Cursor::new(data));
+    match schema {
+        None => {
+            let df = read_rpsl_from_reader(reader)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+            Ok(PyDataFrame(df))
+        }
+        Some(schema_df) => {
+            let polars_schema = schema_df.0.schema();
+            let df = read_rpsl_with_schema_from_reader(reader, &polars_schema)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+            Ok(PyDataFrame(df))
+        }
+    }
+}
+
 #[pymodule]
 fn _rpsl_reader(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_read_rpsl, m)?)?;
+    m.add_function(wrap_pyfunction!(py_read_rpsl_bytes, m)?)?;
     Ok(())
 }
