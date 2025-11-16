@@ -1,0 +1,19 @@
+[package]
+name = "polars-rpsl"
+version.workspace = true
+edition = "2024"
+license.workspace = true
+
+[lib]
+name = "rpsl_reader"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rpsl-parser = { path = "../rpsl-parser" }
+polars = { version = "0.52", default-features = false, features = [ "dtype-struct" ] }
+polars-arrow = { version = "0.52" }
+pyo3 = { version = "0.26", features = ["extension-module"] }
+pyo3-polars = { version = "0.25", default-features = false }
+flate2 = "1.1"
+indexmap = "2.7"
+thiserror = "2.0"

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "polars-rpsl"
+dynamic = ["version"]
+description = "Fast RPSL parser with Polars DataFrame output"
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = ["polars>=1.0", "pyarrow>=15.0"]
+
+[dependency-groups]
+dev = ["maturin>=1.0,<2.0", "pytest>=8.0"]
+
+[tool.maturin]
+manifest-path = "crates/polars-rpsl/Cargo.toml"
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "polars_rpsl._rpsl_reader"
