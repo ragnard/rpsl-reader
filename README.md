@@ -8,6 +8,39 @@ Fast RPSL (Routing Policy Specification Language) parser with Polars DataFrame o
 pip install polars-rpsl
 ```
 
+## Quickstart with uv
+
+```bash
+$ uv run --with polars-rpsl,smart_open[http] python
+Installed 11 packages in 7ms
+Python 3.12.11 (main, Aug  8 2025, 17:06:48) [Clang 20.1.4 ] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from polars_rpsl import read_rpsl
+>>> from smart_open import open
+>>> with open('https://ftp.ripe.net/ripe/dbase/split/ripe.db.aut-num.gz', 'rb') as f:
+...     df = read_rpsl(f)
+...
+>>> df
+shape: (39_016, 1)
+┌─────────────────────────────────┐
+│ attributes                      │
+│ ---                             │
+│ list[struct[2]]                 │
+╞═════════════════════════════════╡
+│ [{"aut-num","AS3255"}, {"as-na… │
+│ [{"aut-num","AS6837"}, {"as-na… │
+│ [{"aut-num","AS15756"}, {"as-n… │
+│ [{"aut-num","AS16054"}, {"org"… │
+│ [{"aut-num","AS9205"}, {"as-na… │
+│ …                               │
+│ [{"aut-num","AS203790"}, {"as-… │
+│ [{"aut-num","AS203786"}, {"as-… │
+│ [{"aut-num","AS203771"}, {"as-… │
+│ [{"aut-num","AS203766"}, {"as-… │
+│ [{"aut-num","AS203757"}, {"as-… │
+└─────────────────────────────────┘
+```
+
 ## Usage
 
 ### Schema-less reading
